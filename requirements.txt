@@ -1,0 +1,6 @@
+boto3
+opencv-python
+pynamodb
+Pillow
+PySerial
+pyinstaller
