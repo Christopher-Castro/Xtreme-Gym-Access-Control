@@ -232,19 +232,26 @@ class Registration:
     def regUser(self):
         try:
             if self.txtUName.get() == "" or self.entryDateFinish.get() == "" or self.txtUPhone.get() == "" or self.entryDateInit.get() == "" or self.txtEmail.get() == "" or self.comboLocation.get() == "":
-                messagebox.showerror("Error!", "Please fill all the fields!")
+                messagebox.showerror("Error!", "Por favor, llene todos los campos!")
                 return
             if self.image_bytes is None:
                 messagebox.showerror("Error!", "No se ha cargado ninguna fotografía")
                 return
             user_id = index_face(self.image_bytes)
+            if isinstance(user_id, dict):
+                if user_id['register']:
+                    messagebox.showerror("Error!", f'Rostro registrado previamente bajo el nombre: {user_id["register"].FullName}')
+                    return
+                else:
+                    messagebox.showerror("Error!", f'Rostro conocido pero sin registro. Se utilizará el ID existente para crear el nuevo registro.')
+                    user_id = user_id['id']
             user = User(user_id, FullName=self.txtUName.get(), phone=self.txtUPhone.get(), email=self.txtEmail.get(), location=self.comboLocation.get(), suscription_start=self.entryDateInit.get(), suscription_end=self.entryDateFinish.get())
             user.save()
             # db.insertStudent(self.txtUName.get(), self.txtUPhone.get(), self.txtEmail.get(), self.entryDateInit.get(),
             #                 self.comboLocation.get(),
             #                 self.entryDateFinish.get(), self.txtUHistory.get(1.0, END))
 
-            messagebox.showinfo("Success!", "Record Successfully Insertered!")
+            messagebox.showinfo("Success!", "Registro creado existosamente!")
         except AttributeError as error:
             print(error)
             messagebox.showerror("Error!", "Please View and Select a Student to Book a Session!")

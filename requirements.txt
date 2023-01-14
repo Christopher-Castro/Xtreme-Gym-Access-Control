@@ -3,4 +3,6 @@ opencv-python
 pynamodb
 Pillow
 PySerial
+tkcalendar
 pyinstaller
+imutils

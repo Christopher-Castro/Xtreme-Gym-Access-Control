@@ -1,6 +1,8 @@
 import boto3
 import os
 
+from db.model import User as User
+
 # dynamodb = boto3.client('dynamodb')
 # s3 = boto3.client('s3')
 rekognition = boto3.client(
@@ -39,7 +41,17 @@ def index_face(image):
 
         # Calls Amazon Rekognition IndexFaces API to detect faces in S3 object 
         # to index faces into specified collection
-        
+        response = rekognition.search_faces_by_image(
+            CollectionId='facerecognition_collection',
+            Image={'Bytes': image}
+        )
+        for match in response['FaceMatches']:
+            print('Rostro conocido')
+            face = User.get(match['Face']['FaceId'])
+            if face:
+                return {'id': {match["Face"]["FaceId"]}, 'register': face}
+            else:
+                return {'id': {match["Face"]["FaceId"]}, 'register': None}
         response = index_faces(image)
         
         # Commit faceId and full name object metadata to DynamoDB
