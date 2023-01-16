@@ -97,7 +97,7 @@ class Registration:
                     # Convert to grayscale
                     self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
                     # Detect the faces
-                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.3, 6, minSize=(150, 150))
+                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
                     # Draw the rectangle around each face
                     self.frame_ = self.frame.copy()
                     if len(self.faces) > 0 :
@@ -244,8 +244,9 @@ class Registration:
                     return
                 else:
                     messagebox.showerror("Error!", f'Rostro conocido pero sin registro. Se utilizará el ID existente para crear el nuevo registro.')
+                    print(user_id['id'])
                     user_id = user_id['id']
-            user = User(user_id, FullName=self.txtUName.get(), phone=self.txtUPhone.get(), email=self.txtEmail.get(), location=self.comboLocation.get(), suscription_start=self.entryDateInit.get(), suscription_end=self.entryDateFinish.get())
+            user = User(user_id, FullName=self.txtUName.get(), phone=self.txtUPhone.get(), email=self.txtEmail.get(), location=self.comboLocation.get(), access_history=[f'createdOn {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}'], suscription_start=self.entryDateInit.get(), suscription_end=self.entryDateFinish.get())
             user.save()
             # db.insertStudent(self.txtUName.get(), self.txtUPhone.get(), self.txtEmail.get(), self.entryDateInit.get(),
             #                 self.comboLocation.get(),
