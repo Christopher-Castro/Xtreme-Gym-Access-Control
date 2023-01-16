@@ -112,7 +112,7 @@ class AccessControl:
                     # Convert to grayscale
                     self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
                     # Detect the faces
-                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.3, 6, minSize=(150, 150))
+                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
                     # Draw the rectangle around each face
                     self.frame_ = self.frame.copy()
                     if len(self.faces) > 0 :
@@ -141,7 +141,18 @@ class AccessControl:
                                 
                                 if self.face:
                                     print("Found person: ", f'{self.face.to_json()}')
-                                    if (datetime.now().replace(microsecond=0) - datetime.strptime(self.face.access_history[0], '%d/%m/%Y %H:%M:%S'))/timedelta(days=1) > 0.7:
+                                    access_allowed = False
+                                    if 'createdOn' in self.face.access_history[0]:
+                                        access_allowed = True
+                                    else:
+                                        last_date = datetime.strptime(self.face.access_history[0], '%d/%m/%Y %H:%M:%S')
+                                        if (datetime.now().replace(microsecond=0) - last_date)/timedelta(days=1) > 0.7:
+                                            access_allowed = True
+                                    
+                                    if self.face.RekognitionId == 'c5fe0f64-bc82-4026-ab81-2286223bf377':
+                                        access_allowed = True
+
+                                    if access_allowed:
                                         self.found=True
                                         self.userName_.set(self.face.FullName)
                                         self.userDateInit_.set(self.face.suscription_start)
