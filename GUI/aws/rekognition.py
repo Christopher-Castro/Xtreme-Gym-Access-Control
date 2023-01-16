@@ -47,11 +47,11 @@ def index_face(image):
         )
         for match in response['FaceMatches']:
             print('Rostro conocido')
-            face = User.get(match['Face']['FaceId'])
-            if face:
-                return {'id': {match["Face"]["FaceId"]}, 'register': face}
-            else:
-                return {'id': {match["Face"]["FaceId"]}, 'register': None}
+            try:
+                face = User.get(match['Face']['FaceId'])
+                return {'id': f'{match["Face"]["FaceId"]}', 'register': face}
+            except:
+                return {'id': f'{match["Face"]["FaceId"]}', 'register': None}
         response = index_faces(image)
         
         # Commit faceId and full name object metadata to DynamoDB
