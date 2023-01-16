@@ -268,7 +268,7 @@ class InstructorControls:
     def tableOutputFrame(self):
         # Treeview Frame Configurations
         self.tableFrame = Frame(self.root, bg="#DADDE6")
-        self.tableFrame.place(x=0, y=400, width=1400, height=560)
+        self.tableFrame.place(x=0, y=400, width=1360, height=560)
         self.yScroll = Scrollbar(self.tableFrame)
         self.yScroll.pack(side=RIGHT, fill=Y)
 
