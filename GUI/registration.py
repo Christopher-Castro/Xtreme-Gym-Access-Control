@@ -16,6 +16,10 @@ from tkinter import messagebox
 from aws.rekognition import index_face
 from db.model import User as User
 
+import mediapipe as mp
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
 class Registration:
     def __init__(self, root):
         self.root = root
@@ -26,11 +30,11 @@ class Registration:
         self.detcolor = 0
         self.detfaces = 0
 
-        # Load the cascade
-        # self.cv2_base_dir = os.path.dirname(os.path.abspath(cv2.__file__))
-        # self.haar_model = os.path.join(self.cv2_base_dir, 'data/haarcascade_frontalface_default.xml')
-        self.haar_model = './assets/haarcascade_frontalface_default.xml'
-        self.face_cascade = cv2.CascadeClassifier(self.haar_model)
+        # # Load the cascade
+        # # self.cv2_base_dir = os.path.dirname(os.path.abspath(cv2.__file__))
+        # # self.haar_model = os.path.join(self.cv2_base_dir, 'data/haarcascade_frontalface_default.xml')
+        # self.haar_model = './assets/haarcascade_frontalface_default.xml'
+        # self.face_cascade = cv2.CascadeClassifier(self.haar_model)
 
         # # Fondo
         # imagenF = PhotoImage(file="../assets/Fondo.png")
@@ -52,7 +56,7 @@ class Registration:
         self.lblVideo.grid(row=1, column=1, padx=10, pady=20)
 
         # Labels
-        self.label = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 18))
+        self.label = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 28))
         self.label.grid(row=2, column=1, padx=10, pady=20, sticky="w")
         self.face_found=False
         self.face_timer = -10
@@ -60,7 +64,7 @@ class Registration:
         # Botones
         # Iniciar Video
         # self.imagenBI = PhotoImage(file="../assets/Inicio.png")
-        self.inicio = Button(self.accessControlFrame, text="Iniciar Cámara", width=15, command=self.iniciar, bd=0, cursor="hand2", bg="#ff1909", fg="black", font=("Impact", 15))
+        self.inicio = Button(self.accessControlFrame, text="Repetir Foto", width=15, command=self.iniciar, bd=0, cursor="hand2", bg="#ff1909", fg="black", font=("Impact", 15))
         self.inicio.grid(row=2, column=0, padx=10, pady=20)
         
         # self.lblVideo2 = Label(self.accessControlFrame)
@@ -88,56 +92,72 @@ class Registration:
                 # self.imgnp = np.asarray(bytearray(self.img_resp.read()), dtype=np.uint8)
                 # self.frame = cv2.imdecode(self.imgnp, -1)
                 # self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-                ret, self.frame = self.cap.read()
-                self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                with mp_face_detection.FaceDetection(
+                    model_selection=0, min_detection_confidence=1.0) as face_detection:
+                    ret, self.frame = self.cap.read()
+                    self.frame.flags.writeable = False
+                    self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                    results = face_detection.process(self.frame)
 
-                # Si es correcta
-                # if self.frame is not None:
-                if ret is not None:
-                    # Convert to grayscale
-                    self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-                    # Detect the faces
-                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
-                    # Draw the rectangle around each face
-                    self.frame_ = self.frame.copy()
-                    if len(self.faces) > 0 :
-                        for (x, y, w, h) in self.faces:
-                            cv2.rectangle(self.frame_, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                            break
-                        self.face_timer = self.face_timer + 10
-                        if self.face_timer == 510:
-                            self.inicio.grid(row=2, column=0, padx=10, pady=20)
-                            self.face_found = True
-                            self.label.configure(text='Rostro detectado.')
-                            # convert to jpeg and save in variable
-                            self.image_bytes = cv2.imencode('.jpg', self.frame)[1].tobytes()
+                    # Draw the face detection annotations on the image.
+                    self.frame.flags.writeable = True
+
+                    # Si es correcta
+                    # if self.frame is not None:
+                    if ret is not None:
+                        # Convert to grayscale
+                        # self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+                        # # Detect the faces
+                        # self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
+                        self.frame_ = self.frame.copy()
+                        if results.detections:
+                            for detection in results.detections:
+                                mp_drawing.draw_detection(self.frame_, detection)
+                        # if len(self.faces) > 0 :
+                        #     for (x, y, w, h) in self.faces:
+                        #         cv2.rectangle(self.frame_, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                        #         break
+                            if len(results.detections) == 1:
+                                self.face_timer = self.face_timer + 10
+                            else:
+                                self.face_timer = -10
+                            if self.face_timer == 510:
+                                self.face_timer = -10
+                                self.inicio.grid(row=2, column=0, padx=10, pady=20)
+                                self.face_found = True
+                                self.label.configure(text='Rostro detectado.', fg="Green")
+                                # convert to jpeg and save in variable
+                                self.image_bytes = cv2.imencode('.jpg', self.frame)[1].tobytes()
+                            else:
+                                self.face_found = False
+                                if len(results.detections) == 1:
+                                    self.label.configure(text=(f'Detectando rostro {(self.face_timer)/5} %'), fg="Red")
+                                else:
+                                    self.label.configure(text=(f'Detección de más de un rostro!'), fg="Red")
+                            # if self.face_timer == 500:
+                            #     self.cap = r'http://192.168.100.146/1600x1200.jpg'
                         else:
+                            self.face_timer = -10
                             self.face_found = False
-                            self.label.configure(text=(f'Detectando rostro {(self.face_timer)/5} %'))
-                        # if self.face_timer == 500:
-                        #     self.cap = r'http://192.168.100.146/1600x1200.jpg'
+                            self.label.configure(text='')
+
+                        # Rendimensionamos el video
+                        self.frame_ = imutils.resize(self.frame_, width=640)
+
+                        # Convertimos el video
+                        self.im = Image.fromarray(self.frame_)
+                        self.img = ImageTk.PhotoImage(image=self.im)
+
+                        # Mostramos en el GUI
+                        self.lblVideo.configure(image=self.img)
+                        self.lblVideo.image = self.img
+                        if not self.face_found:
+                            self.lblVideotimer = self.lblVideo.after(10, self.visualizar)
+                        else:
+                            self.lblVideo.after_cancel(self.lblVideotimer)
                     else:
-                        self.face_timer = -10
-                        self.face_found = False
-                        self.label.configure(text='')
-
-                    # Rendimensionamos el video
-                    self.frame_ = imutils.resize(self.frame_, width=640)
-
-                    # Convertimos el video
-                    self.im = Image.fromarray(self.frame_)
-                    self.img = ImageTk.PhotoImage(image=self.im)
-
-                    # Mostramos en el GUI
-                    self.lblVideo.configure(image=self.img)
-                    self.lblVideo.image = self.img
-                    if not self.face_found:
-                        self.lblVideotimer = self.lblVideo.after(10, self.visualizar)
-                    else:
-                        self.lblVideo.after_cancel(self.lblVideotimer)
-                else:
-                    # cap.release()
-                    print("frame not found")
+                        # cap.release()
+                        print("frame not found")
             except:
                 print("error in frame creation")
                 self.visualizar()

@@ -15,6 +15,9 @@ import serial
 from tkinter import messagebox
 
 from db.model import User as User
+import mediapipe as mp
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
 
 rekognition = boto3.client(
     'rekognition',
@@ -47,8 +50,8 @@ class AccessControl:
         # Load the cascade
         # self.cv2_base_dir = os.path.dirname(os.path.abspath(cv2.__file__))
         # self.haar_model = os.path.join(self.cv2_base_dir, 'data/haarcascade_frontalface_default.xml')
-        self.haar_model = './assets/haarcascade_frontalface_default.xml'
-        self.face_cascade = cv2.CascadeClassifier(self.haar_model)
+        # # self.haar_model = './assets/haarcascade_frontalface_default.xml'
+        # self.face_cascade = cv2.CascadeClassifier(self.haar_model)
 
         # # Fondo
         # imagenF = PhotoImage(file="../assets/Fondo.png")
@@ -76,7 +79,7 @@ class AccessControl:
         self.lblVideo.grid(row=1, column=1, padx=10, pady=20)
 
         # Labels
-        self.label = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 18))
+        self.label = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 28))
         self.label.grid(row=2, column=1, padx=10, pady=20, sticky="w")
         self.face_found=False
         self.face_timer = -10
@@ -103,103 +106,126 @@ class AccessControl:
                 # self.imgnp = np.asarray(bytearray(self.img_resp.read()), dtype=np.uint8)
                 # self.frame = cv2.imdecode(self.imgnp, -1)
                 # self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-                ret, self.frame = self.cap.read()
-                self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                with mp_face_detection.FaceDetection(
+                    model_selection=0, min_detection_confidence=1.0) as face_detection:
+                    ret, self.frame = self.cap.read()
+                    self.frame.flags.writeable = False
+                    self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+                    results = face_detection.process(self.frame)
 
-                # Si es correcta
-                # if self.frame is not None:
-                if ret is not None:
-                    # Convert to grayscale
-                    self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-                    # Detect the faces
-                    self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
-                    # Draw the rectangle around each face
-                    self.frame_ = self.frame.copy()
-                    if len(self.faces) > 0 :
-                        for (x, y, w, h) in self.faces:
-                            cv2.rectangle(self.frame_, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                            break
-                        self.face_timer = self.face_timer + 10
-                        if self.face_timer == 210:
-                            self.face_found = True
-                            self.label.configure(text='Reconociendo rostro...')
-                            # convert to jpeg and save in variable
-                            self.image_bytes = cv2.imencode('.jpg', self.frame)[1].tobytes()
-                            self.response = rekognition.search_faces_by_image(
-                                CollectionId='facerecognition_collection',
-                                Image={'Bytes': self.image_bytes}
-                            )
-                            self.found = False
-                            for match in self.response['FaceMatches']:
-                                print(match['Face']['FaceId'],match['Face']['Confidence'])
+                    # Draw the face detection annotations on the image.
+                    self.frame.flags.writeable = True
+                    # self.frame = cv2.cvtColor(self.frame, cv2.COLOR_RGB2BGR)
+                    
+                    # Si es correcta
+                    # if self.frame is not None:
+                    if ret is not None:
+                        # Convert to grayscale
+                        # self.gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+                        # Detect the faces
+                        # self.faces = self.face_cascade.detectMultiScale(self.gray_frame, 1.2, 3, minSize=(200, 200))
+                        # Draw the rectangle around each face
+                        self.frame_ = self.frame.copy()
+                        if results.detections:
+                            for detection in results.detections:
+                                mp_drawing.draw_detection(self.frame_, detection)
+                        # if len(self.faces) > 0 :
+                        #     for (x, y, w, h) in self.faces:
+                        #         cv2.rectangle(self.frame_, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                        #         break
+                            if len(results.detections) == 1:
+                                self.face_timer = self.face_timer + 10
+                            else:
+                                self.face_timer = -10
 
-                                # self.face = dynamodb.get_item(
-                                #     TableName='facerecognition',
-                                #     Key={'RekognitionId': {'S': match['Face']['FaceId']}}
-                                # )
-                                self.face = User.get(match['Face']['FaceId'])
-                                
-                                if self.face:
-                                    print("Found person: ", f'{self.face.to_json()}')
-                                    access_allowed = False
-                                    if 'createdOn' in self.face.access_history[0]:
-                                        access_allowed = True
+                            if self.face_timer == 510:
+                                self.face_found = True
+                                self.face_timer = -10
+                                # convert to jpeg and save in variable
+                                self.image_bytes = cv2.imencode('.jpg', self.frame)[1].tobytes()
+                                self.response = rekognition.search_faces_by_image(
+                                    CollectionId='facerecognition_collection',
+                                    Image={'Bytes': self.image_bytes}
+                                )
+                                self.found = False
+                                for match in self.response['FaceMatches']:
+                                    print(match['Face']['FaceId'],match['Face']['Confidence'])
+    
+                                    if match['Face']['Confidence'] > 95:
+                                        # self.face = dynamodb.get_item(
+                                        #     TableName='facerecognition',
+                                        #     Key={'RekognitionId': {'S': match['Face']['FaceId']}}
+                                        # )
+                                        self.face = User.get(match['Face']['FaceId'])
+                                        
+                                        if self.face:
+                                            self.found=True
+                                            print("Found person: ", f'{self.face.to_json()}')
+                                            access_allowed = False
+                                            if 'createdOn' in self.face.access_history[0]:
+                                                access_allowed = True
+                                            else:
+                                                last_date = datetime.strptime(self.face.access_history[0], '%d/%m/%Y %H:%M:%S')
+                                                if (datetime.now().replace(microsecond=0) - last_date)/timedelta(days=1) > 0.3:
+                                                    access_allowed = True
+                                            
+                                            if self.face.RekognitionId == 'c5fe0f64-bc82-4026-ab81-2286223bf377':
+                                                access_allowed = True
+
+                                            if access_allowed:
+                                                self.userName_.set(self.face.FullName)
+                                                self.userDateInit_.set(self.face.suscription_start)
+                                                self.userDateFinish_.set(self.face.suscription_end)
+                                                daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.now().replace(second=0, microsecond=0))/timedelta(days=1))
+                                                if daysCount_>=0:
+                                                    self.label.configure(text=f'Persona reconocida. Bien venido!', fg="Green")
+                                                    self.daysCount.set(str(daysCount_))
+                                                    self.arduino.write(b'1')
+                                                    self.face.update(actions=[
+                                                        User.access_history.set(
+                                                            User.access_history.prepend([datetime.now().strftime("%d/%m/%Y %H:%M:%S")])
+                                                        )
+                                                    ])
+                                                else:
+                                                    self.label.configure(text=f'Persona reconocida con membresia expirada.')
+                                                    self.daysCount.set("Expirado")
+                                            else:
+                                                self.label.configure(text=f'Doble acceso!!!\nÚltima visita: {self.face.access_history[0]}')
+                                                self.userName_.set(self.face.FullName)
+                                                self.userDateInit_.set(self.face.suscription_start)
+                                                self.userDateFinish_.set(self.face.suscription_end)
+                                            break
+
+                                if not self.found:
+                                    self.label.configure(text=(f'Persona no reconocida'))
+                            else:
+                                self.face_found = False
+                                if self.face_timer == 500:
+                                    self.label.configure(text='Reconociendo rostro...')
+                                else:
+                                    if len(results.detections) == 1:
+                                        self.label.configure(text=(f'Detectando rostro {(self.face_timer)/5} %'), fg="Red")
                                     else:
-                                        last_date = datetime.strptime(self.face.access_history[0], '%d/%m/%Y %H:%M:%S')
-                                        if (datetime.now().replace(microsecond=0) - last_date)/timedelta(days=1) > 0.7:
-                                            access_allowed = True
-                                    
-                                    if self.face.RekognitionId == 'c5fe0f64-bc82-4026-ab81-2286223bf377':
-                                        access_allowed = True
-
-                                    if access_allowed:
-                                        self.found=True
-                                        self.userName_.set(self.face.FullName)
-                                        self.userDateInit_.set(self.face.suscription_start)
-                                        self.userDateFinish_.set(self.face.suscription_end)
-                                        daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.strptime(self.face.suscription_start, '%d/%m/%Y'))/timedelta(days=1))
-                                        if daysCount_>=0:
-                                            self.label.configure(text=f'Persona reconocida.')
-                                            self.daysCount.set(str(daysCount_))
-                                            self.arduino.write(b'1')
-                                            self.face.update(actions=[
-                                                User.access_history.set(
-                                                    User.access_history.prepend([datetime.now().strftime("%d/%m/%Y %H:%M:%S")])
-                                                )
-                                            ])
-                                        else:
-                                            self.label.configure(text=f'Persona reconocida con membresia expirada.')
-                                            self.daysCount.set("Expirado")
-                                    else:
-                                        self.label.configure(text=f'Doble acceso!!! Última visita: {self.face.access_history[0]}')
-                                        self.userName_.set(self.face.FullName)
-                                        self.userDateInit_.set(self.face.suscription_start)
-                                        self.userDateFinish_.set(self.face.suscription_end)
-                                    break
-                            if not self.found:
-                                print('Persona no reconocida')
+                                        self.label.configure(text=(f'Detección de más de un rostro!'), fg="Red")
                         else:
+                            self.face_timer = -10
                             self.face_found = False
-                            self.label.configure(text=(f'Detectando rostro {(self.face_timer)/2} %'))
+                            self.label.configure(text='')
+
+                        # Rendimensionamos el video
+                        self.frame_ = imutils.resize(self.frame_, width=640)
+
+                        # Convertimos el video
+                        self.im = Image.fromarray(self.frame_)
+                        self.img = ImageTk.PhotoImage(image=self.im)
+
+                        # Mostramos en el GUI
+                        self.lblVideo.configure(image=self.img)
+                        self.lblVideo.image = self.img
+                        self.lblVideo.after(5000 if self.face_found else 10, self.visualizar)
                     else:
-                        self.face_timer = -10
-                        self.face_found = False
-                        self.label.configure(text='')
-
-                    # Rendimensionamos el video
-                    self.frame_ = imutils.resize(self.frame_, width=640)
-
-                    # Convertimos el video
-                    self.im = Image.fromarray(self.frame_)
-                    self.img = ImageTk.PhotoImage(image=self.im)
-
-                    # Mostramos en el GUI
-                    self.lblVideo.configure(image=self.img)
-                    self.lblVideo.image = self.img
-                    self.lblVideo.after(5000 if self.face_found else 10, self.visualizar)
-                else:
-                    # cap.release()
-                    print("frame not found")
+                        # cap.release()
+                        print("frame not found")
             except Exception as error:
                 print("error in frame creation")
                 print(error)

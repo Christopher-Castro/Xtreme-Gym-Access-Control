@@ -6,3 +6,4 @@ PySerial
 tkcalendar
 pyinstaller
 imutils
+mediapipe
