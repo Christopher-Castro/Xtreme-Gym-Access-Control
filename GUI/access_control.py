@@ -151,7 +151,7 @@ class AccessControl:
                                 for match in self.response['FaceMatches']:
                                     print(match['Face']['FaceId'],match['Face']['Confidence'])
     
-                                    if match['Face']['Confidence'] > 95:
+                                    if match['Face']['Confidence'] > 99:
                                         # self.face = dynamodb.get_item(
                                         #     TableName='facerecognition',
                                         #     Key={'RekognitionId': {'S': match['Face']['FaceId']}}
