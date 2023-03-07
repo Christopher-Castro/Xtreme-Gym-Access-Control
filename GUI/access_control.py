@@ -151,7 +151,7 @@ class AccessControl:
                                 for match in self.response['FaceMatches']:
                                     print(match['Face']['FaceId'],match['Face']['Confidence'])
     
-                                    if match['Face']['Confidence'] > 99.0:
+                                    if match['Face']['Confidence'] > 99.5:
                                         # self.face = dynamodb.get_item(
                                         #     TableName='facerecognition',
                                         #     Key={'RekognitionId': {'S': match['Face']['FaceId']}}
@@ -176,7 +176,7 @@ class AccessControl:
                                                 self.userName_.set(self.face.FullName)
                                                 self.userDateInit_.set(self.face.suscription_start)
                                                 self.userDateFinish_.set(self.face.suscription_end)
-                                                daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.now().replace(second=0, microsecond=0))/timedelta(days=1))
+                                                daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.now().replace(second=0, microsecond=0))/timedelta(days=1)) - 1 
                                                 if daysCount_>=0:
                                                     self.label.configure(text=f'Persona reconocida. Bien venido!', fg="Green")
                                                     self.daysCount.set(str(daysCount_))
