@@ -57,9 +57,9 @@ mp_drawing = mp.solutions.drawing_utils
 # cap1 = cv2.VideoCapture('http://192.168.100.146:81/stream')
 # cap2 = cv2.VideoCapture('http://192.168.100.147:81/stream')
 cap1 = cv2.VideoCapture(0)
-cap2 = cv2.VideoCapture(1)
+cap2 = cv2.VideoCapture(2)
 with mp_face_detection.FaceDetection(
-    model_selection=0, min_detection_confidence=1) as face_detection:
+    model_selection=0, min_detection_confidence=0.5) as face_detection:
   while cap1.isOpened() and cap2.isOpened():
     success1, image1 = cap1.read()
     success2, image2 = cap2.read()
