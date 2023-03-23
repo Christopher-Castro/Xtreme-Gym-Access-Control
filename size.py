@@ -1,14 +1,9 @@
 import cv2
 
-HIGH_VALUE = 10000
-WIDTH = HIGH_VALUE
-HEIGHT = HIGH_VALUE
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) # this is the magic!
 
-capture = cv2.VideoCapture(0)
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
-width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-print(width,height)
+r, frame = cap.read()
+print('Resolution: ' + str(frame.shape[0]) + ' x ' + str(frame.shape[1]))
