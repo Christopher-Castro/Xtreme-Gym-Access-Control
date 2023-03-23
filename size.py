@@ -1,10 +1,15 @@
+import pandas as pd
 import cv2
 
+url = "https://en.wikipedia.org/wiki/List_of_common_resolutions"
+table = pd.read_html(url)[0]
+table.columns = table.columns.droplevel()
 cap = cv2.VideoCapture(0)
-# set resolution to 1280x720
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-print(width,height)
+resolutions = {}
+for index, row in table[["W", "H"]].iterrows():
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, row["W"])
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, row["H"])
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    resolutions[str(width)+"x"+str(height)] = "OK"
+print(resolutions)
