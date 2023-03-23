@@ -3,7 +3,7 @@ from urllib.request import urlopen
 import numpy as np
 import os
 
-url = r'http://192.168.100.146/640x480.jpg'
+url = r'http://192.168.100.147/capture'
 
 cv2_base_dir = os.path.dirname(os.path.abspath(cv2.__file__))
 haar_model = os.path.join(cv2_base_dir, 'data/haarcascade_frontalface_default.xml')
