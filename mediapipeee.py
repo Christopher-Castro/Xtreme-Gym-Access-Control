@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import time
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
@@ -25,7 +26,56 @@ mp_drawing = mp.solutions.drawing_utils
 
 # For webcam input:
 # cap = cv2.VideoCapture('http://192.168.100.147:81/stream')
+class LoadBar():
+  def __init__(self):
+    self.count = 0
+    self.count_min = 0
+    self.count_max = 1
+    self.count_step = 0.02
+    self.load_bar_relative_height = 0.1
+  
+  def draw_load_bar_base(self, img, detection):
+    location = detection.location_data
+    relative_bounding_box = location.relative_bounding_box
+    if not location.HasField('relative_bounding_box'):
+      return
+    image_rows, image_cols, _ = image.shape
+    rectangle_height = self.load_bar_relative_height*relative_bounding_box.height
+    top_left_x = relative_bounding_box.xmin
+    top_left_y = relative_bounding_box.ymin - rectangle_height
+    top_left = mp_drawing._normalized_to_pixel_coordinates(top_left_x, top_left_y, image_cols, image_rows)
+    bottom_right_x = relative_bounding_box.xmin + relative_bounding_box.width
+    bottom_right_y = relative_bounding_box.ymin
+    bottom_right = mp_drawing._normalized_to_pixel_coordinates(bottom_right_x, bottom_right_y, image_cols, image_rows)
+    cv2.rectangle(img, top_left, bottom_right, (128, 128, 128), -1)
+
+  def draw_loading(self, img, detection):
+    location = detection.location_data
+    relative_bounding_box = location.relative_bounding_box
+    image_rows, image_cols, _ = image.shape
+    rectangle_height = self.load_bar_relative_height*relative_bounding_box.height
+    top_left_x = relative_bounding_box.xmin + relative_bounding_box.width
+    top_left_y = relative_bounding_box.ymin - rectangle_height
+    top_left = mp_drawing._normalized_to_pixel_coordinates(top_left_x, top_left_y, image_cols, image_rows)
+    bottom_right_x = relative_bounding_box.xmin + relative_bounding_box.width * ( 1 - self.count)
+    bottom_right_y = relative_bounding_box.ymin
+    bottom_right = mp_drawing._normalized_to_pixel_coordinates(bottom_right_x, bottom_right_y, image_cols, image_rows)
+    cv2.rectangle(img, top_left, bottom_right, (0, 0, 255), -1)
+  
+  def reset_load_bar(self):
+    self.count = self.count_min
+
+  def draw_load_bar(self, img, detection):
+    if self.count < self.count_max:
+      self.count += self.count_step
+    self.draw_load_bar_base(img, detection)
+    self.draw_loading(img, detection)
+    return True if self.count >= self.count_max else False
+
+    
+
 cap = cv2.VideoCapture(0)
+load_bar = LoadBar()
 with mp_face_detection.FaceDetection(
     model_selection=0, min_detection_confidence=0.5) as face_detection:
   while cap.isOpened():
@@ -45,8 +95,18 @@ with mp_face_detection.FaceDetection(
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     if results.detections:
-      for detection in results.detections:
+      if len(results.detections) == 1:
+        detection = results.detections[0]
+        loaded = load_bar.draw_load_bar(image, detection)
         mp_drawing.draw_detection(image, detection)
+        if loaded:
+          time.sleep(5)
+      else:
+        load_bar.reset_load_bar()
+        for detection in results.detections:
+          mp_drawing.draw_detection(image, detection)
+    else:
+      load_bar.reset_load_bar()
     # Flip the image horizontally for a selfie-view display.
     cv2.imshow('MediaPipe Face Detection', cv2.flip(image, 1))
     if cv2.waitKey(5) & 0xFF == 27:
