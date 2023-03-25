@@ -5,9 +5,10 @@ import login
 def main():
     root = Tk()
     root.title("Xtreme Gym - Sistema de control de acceso | By Christopher Castro")
-    root.geometry("1400x930+100+50")
+    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+    root.geometry("%dx%d+0+0" % (w, h))
     root.resizable(False, True)
-    root.state('zoomed')
+    # root.wm_state('zoomed')
     root.config(bg="#f0f0f0")
 
     photo = PhotoImage(file = "./assets/icon.png")
