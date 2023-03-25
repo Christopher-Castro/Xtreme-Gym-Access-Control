@@ -93,7 +93,7 @@ class Registration:
                 # self.frame = cv2.imdecode(self.imgnp, -1)
                 # self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 with mp_face_detection.FaceDetection(
-                    model_selection=0, min_detection_confidence=1.0) as face_detection:
+                    model_selection=0, min_detection_confidence=0.7) as face_detection:
                     ret, self.frame = self.cap.read()
                     self.frame.flags.writeable = False
                     self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
@@ -167,7 +167,7 @@ class Registration:
     def iniciar(self):
         # Elegimos la camara
         if not self.cap:
-            self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            self.cap = cv2.VideoCapture(0)
         self.inicio.grid_remove()
         self.image_bytes = None
         self.visualizar()

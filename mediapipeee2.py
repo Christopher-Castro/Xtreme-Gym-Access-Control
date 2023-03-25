@@ -74,7 +74,7 @@ class LoadBar():
 
     
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(2)
 load_bar = LoadBar()
 with mp_face_detection.FaceDetection(
     model_selection=0, min_detection_confidence=0.5) as face_detection:
@@ -101,6 +101,7 @@ with mp_face_detection.FaceDetection(
         mp_drawing.draw_detection(image, detection)
         if loaded:
           time.sleep(5)
+          load_bar.reset_load_bar()
       else:
         load_bar.reset_load_bar()
         for detection in results.detections:
