@@ -1,9 +1,26 @@
 import cv2
 import mediapipe as mp
 import time
+import paho.mqtt.client as mqtt
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
+## mqtt config
+broker_url = "localhost"
+broker_port = 1883
+def on_connect(client, userdata, flags, rc):
+	print("Connected With Result Code ", rc)
+
+client = mqtt.Client()
+client.on_connect = on_connect
+
+def mqtt_publish(turn_on):
+  client.connect(broker_url, broker_port)
+  if turn_on:
+    client.publish(topic="gym/access/gate", payload="ON", qos=1, retain=False)
+  else:
+    client.publish(topic="gym/access/gate", payload="OFF", qos=1, retain=False)  
+  
 # For static images:
 # IMAGE_FILES = []
 # with mp_face_detection.FaceDetection(
@@ -100,7 +117,9 @@ with mp_face_detection.FaceDetection(
         loaded = load_bar.draw_load_bar(image, detection)
         mp_drawing.draw_detection(image, detection)
         if loaded:
+          mqtt_publish(True)
           time.sleep(5)
+          mqtt_publish(False)
           load_bar.reset_load_bar()
       else:
         load_bar.reset_load_bar()
