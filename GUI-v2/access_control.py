@@ -13,10 +13,28 @@ import imutils
 
 from tkinter import messagebox
 
+import paho.mqtt.client as mqtt
+
 from db.model import User as User
 import mediapipe as mp
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
+
+## mqtt config
+broker_url = "localhost"
+broker_port = 1883
+def on_connect(client, userdata, flags, rc):
+	print("Connected With Result Code ", rc)
+
+client = mqtt.Client()
+client.on_connect = on_connect
+
+def mqtt_publish(turn_on):
+  client.connect(broker_url, broker_port)
+  if turn_on:
+    client.publish(topic="gym/access/gate", payload="ON", qos=1, retain=False)
+  else:
+    client.publish(topic="gym/access/gate", payload="OFF", qos=1, retain=False)  
 
 rekognition = boto3.client(
     'rekognition',
@@ -36,7 +54,7 @@ class AccessControl:
     def __init__(self, root):
         self.root = root
         self.accessControlFrame = Frame(self.root)
-        self.accessControlFrame.pack(side=LEFT, fill=X)
+        self.accessControlFrame.pack(side=TOP, fill=X)
         # Variables
         self.cap = None
         self.detcolor = 0
@@ -60,12 +78,16 @@ class AccessControl:
         # Finalizar Video
         # self.imagenBF = PhotoImage(file="../assets/Finalizar.png")
         # self.fin = Button(self.accessControlFrame, text="Finalizar", image= self.imagenBF, height="40", width="200", command=self.finalizar)
-        self.fin = Button(self.accessControlFrame, text="Regresar", width=10, command=self.finalizar, bd=0, cursor="hand2", bg="#ff1909", fg="black", font=("Impact", 15))
-        self.fin.grid(row=0, column=0, padx=10, pady=20)
-
+        # self.fin = Button(self.accessControlFrame, text="Regresar", width=10, command=self.finalizar, bd=0, cursor="hand2", bg="#ff1909", fg="black", font=("Impact", 15))
+        # self.fin.grid(row=0, column=0, padx=10, pady=20)
+        
+        # Blanck Labels
+        self.label_blank = Label(self.accessControlFrame, text="Xtreme Gym Platinum", fg="Red", font=("Helvetica", 40, "bold"))
+        self.label_blank.grid(row=0, column=0, padx=10, pady=20, sticky="w")
+        
         # Interfaz
-        self.texto1 = Label(self.accessControlFrame, text="VIDEO EN TIEMPO REAL: ", font=("Impact", 35))
-        self.texto1.grid(row=0, column=1, padx=10, pady=20, sticky="w")
+        self.texto1 = Label(self.accessControlFrame, text="Por favor, identifíquese", font=("Arial", 35))
+        self.texto1.grid(row=1, column=0, padx=10, pady=20, sticky="w")
         
         # Botones
         # Iniciar Video
@@ -75,19 +97,24 @@ class AccessControl:
 
         # Video
         self.lblVideo = Label(self.accessControlFrame)
-        self.lblVideo.grid(row=1, column=1, padx=10, pady=20)
+        self.lblVideo.grid(row=2, column=0, padx=40, pady=20)
 
         # Labels
         self.label = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 28))
-        self.label.grid(row=2, column=1, padx=10, pady=20, sticky="w")
+        self.label.grid(row=3, column=0, padx=10, pady=20, sticky="w")
         self.face_found=False
         self.face_timer = -10
+        
+        # Blanck Labels 2
+        self.label_blank2 = Label(self.accessControlFrame, text="", fg="Red", font=("Helvetica", 42))
+        self.label_blank2.grid(row=4, column=0, padx=0, pady=0, sticky="w")
 
 
         # self.lblVideo2 = Label(self.accessControlFrame)
         # self.lblVideo2.place(x = 470, y = 500)
         # mask = imutils.resize(mask, width=360)
         # self.accessControlFrame.mainloop()
+        self.registrationControlsFrame()
         self.iniciar()
 
     # Funcion Visualizar
@@ -104,8 +131,12 @@ class AccessControl:
                 # self.frame = cv2.imdecode(self.imgnp, -1)
                 # self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 with mp_face_detection.FaceDetection(
-                    model_selection=0, min_detection_confidence=1.0) as face_detection:
+                    model_selection=0, min_detection_confidence=0.7) as face_detection:
                     ret, self.frame = self.cap.read()
+                    if not ret:
+                        print("Ignoring empty camera frame.")
+                        self.cap.release()
+                        self.iniciar()
                     self.frame.flags.writeable = False
                     self.frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                     results = face_detection.process(self.frame)
@@ -177,6 +208,7 @@ class AccessControl:
                                                 if daysCount_>=0:
                                                     self.label.configure(text=f'Persona reconocida. Bien venido!', fg="Green")
                                                     self.daysCount.set(str(daysCount_))
+                                                    mqtt_publish(True)
                                                     self.face.update(actions=[
                                                         User.access_history.set(
                                                             User.access_history.prepend([datetime.now().strftime("%d/%m/%Y %H:%M:%S")])
@@ -231,7 +263,7 @@ class AccessControl:
     # Funcion iniciar
     def iniciar(self):
         # Elegimos la camara
-        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        self.cap = cv2.VideoCapture(0)
         self.visualizar()
 
     def iniciar_esp(self):
@@ -256,29 +288,29 @@ class AccessControl:
     def registrationControlsFrame(self):
         # User Name
         self.registrationControlFrame = Frame(self.root)
-        self.registrationControlFrame.pack(side=RIGHT, fill=X)
-        self.labelUPhone = Label(self.registrationControlFrame, text="Nombre", font=("Times New Roman", 22, "bold"), fg="black")
-        self.labelUPhone.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.txtUName = Entry(self.registrationControlFrame, textvariable=self.userName_, font=("Times New Roman", 20), width=40)
-        self.txtUName.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        self.registrationControlFrame.pack(side=BOTTOM, fill=X)
+        self.labelUPhone = Label(self.registrationControlFrame, text="Nombre", font=("Helvetica", 26, "bold"), fg="black")
+        self.labelUPhone.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        self.txtUName = Entry(self.registrationControlFrame, textvariable=self.userName_, font=("Helvetica", 20), width=40)
+        self.txtUName.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         # User Date init
-        self.labelDateInit = Label(self.registrationControlFrame, text="Fecha inicio", font=("Times New Roman", 22, "bold"), fg="black")
-        self.labelDateInit.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.entryDateInit = Entry(self.registrationControlFrame, textvariable=self.userDateInit_, font=("Times New Roman", 40), width=40)
-        self.entryDateInit.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+        self.labelDateInit = Label(self.registrationControlFrame, text="Fecha inicio", font=("Helvetica", 26, "bold"), fg="black")
+        self.labelDateInit.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+        self.entryDateInit = Entry(self.registrationControlFrame, textvariable=self.userDateInit_, font=("Helvetica", 40), width=40)
+        self.entryDateInit.grid(row=4, column=1, padx=10, pady=10, sticky="w")
 
         # User date finish
-        self.labelDateFinish = Label(self.registrationControlFrame, text="Fecha fin", font=("Times New Roman", 22, "bold"), fg="black")
-        self.labelDateFinish.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-        self.entryDateFinish = Entry(self.registrationControlFrame, textvariable=self.userDateFinish_, font=("Times New Roman", 40), width=40)
-        self.entryDateFinish.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+        self.labelDateFinish = Label(self.registrationControlFrame, text="Fecha fin", font=("Helvetica", 26, "bold"), fg="black")
+        self.labelDateFinish.grid(row=5, column=0, padx=10, pady=10, sticky="w")
+        self.entryDateFinish = Entry(self.registrationControlFrame, textvariable=self.userDateFinish_, font=("Helvetica", 40), width=40)
+        self.entryDateFinish.grid(row=5, column=1, padx=10, pady=10, sticky="w")
 
         # Dias restantes
-        self.labelDateFinish = Label(self.registrationControlFrame, text="Días restantes", font=("Times New Roman", 22, "bold"), fg="black")
-        self.labelDateFinish.grid(row=3, column=0, padx=10, pady=10, sticky="w")
-        self.entryDateFinish = Entry(self.registrationControlFrame, textvariable=self.daysCount, font=("Times New Roman", 100, "bold"), width=20)
-        self.entryDateFinish.grid(row=3, column=1, padx=10, pady=10, sticky="w")
+        self.labelDateFinish = Label(self.registrationControlFrame, text="Días restantes", font=("Helvetica", 26, "bold"), fg="black")
+        self.labelDateFinish.grid(row=6, column=0, padx=10, pady=10, sticky="w")
+        self.entryDateFinish = Entry(self.registrationControlFrame, textvariable=self.daysCount, font=("Helvetica", 100, "bold"), width=20)
+        self.entryDateFinish.grid(row=6, column=1, padx=10, pady=10, sticky="w")
 
         # User History
         # self.labelHistory = Label(self.registrationControlFrame, text="Historial de acceso", font=("Times New Roman", 16, "bold"), bg="#5856a0",

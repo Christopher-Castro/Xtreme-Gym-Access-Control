@@ -5,7 +5,7 @@ import access_control
 #main method
 def main():
     root = Tk()
-    root.title("Xtreme Gym - Sistema de control de acceso | By Christopher Castro")
+    root.title("Sistema de control de acceso | By Christopher Castro")
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry("%dx%d+0+0" % (w, h))
     root.resizable(False, True)
