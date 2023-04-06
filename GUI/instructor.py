@@ -184,7 +184,7 @@ class InstructorControls:
         self.out.delete(*self.out.get_children())  # emptying the table before reloading
         # for user in User.scan(limit=10):
         #     self.out.insert("", END, values=(user.RekognitionId, user.FullName, user.email, user.phone, user.location, user.access_history, user.suscription_start, user.suscription_end))
-        for user in User.FullName_index.scan(User.FullName.contains(self.userByName.get()), limit=10) :
+        for user in User.FullName_index.scan(User.FullName.contains(self.userByName.get()), limit=50) :
             self.out.insert("", END, values=(user.RekognitionId, user.FullName, user.email, user.phone, user.location, user.access_history, user.suscription_start, user.suscription_end))
 
     # Method to direct to the next Frame to access control window

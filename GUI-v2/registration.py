@@ -219,7 +219,7 @@ class Registration:
         self.comboLocation = ttk.Combobox(self.registrationControlFrame, textvariable=self.userLocation, font=("Times New Roman", 15),
                                         width=40,
                                         state="readonly")
-        self.comboLocation['values'] = ("Matriz")
+        self.comboLocation['values'] = ("Matriz", "Platinum")
         self.comboLocation.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         # User Date init
