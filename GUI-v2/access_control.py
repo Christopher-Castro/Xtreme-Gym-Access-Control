@@ -197,7 +197,7 @@ class AccessControl:
                                                 if (datetime.now().replace(microsecond=0) - last_date)/timedelta(days=1) > 0.3:
                                                     access_allowed = True
                                             
-                                            if self.face.RekognitionId in ['c5fe0f64-bc82-4026-ab81-2286223bf377', 'c0732fba-2df2-49c6-85ba-ea2bae3ec139', 'c60be0c3-99a5-492e-97aa-5d6ea033250d', '1570fd41-1846-4b8b-807b-5723aaa42c43', '1f8aaa82-c4bb-4da9-a2bd-27a2a612bf51'] :
+                                            if self.face.RekognitionId in ['c5fe0f64-bc82-4026-ab81-2286223bf377', 'c0732fba-2df2-49c6-85ba-ea2bae3ec139', 'c60be0c3-99a5-492e-97aa-5d6ea033250d', '1570fd41-1846-4b8b-807b-5723aaa42c43', '1f8aaa82-c4bb-4da9-a2bd-27a2a612bf51', '8b901d21-e7f1-49ce-8ef9-d2142c6bdda4'] :
                                                 access_allowed = True
 
                                             if access_allowed:

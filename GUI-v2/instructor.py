@@ -10,6 +10,28 @@ from tkcalendar import *
 from db.model import User as User
 from datetime import datetime
 
+import paho.mqtt.client as mqtt
+
+## mqtt config
+broker_url = "192.168.100.48"
+broker_port = 1883
+def on_connect(client, userdata, flags, rc):
+	print("Connected With Result Code ", rc)
+
+client = mqtt.Client()
+client.on_connect = on_connect
+
+def mqtt_publish(turn_on):
+  client.connect(broker_url, broker_port)
+  if turn_on:
+    client.publish(topic="gym/access/gate", payload="ON", qos=1, retain=False)
+  else:
+    client.publish(topic="gym/access/gate", payload="OFF", qos=1, retain=False)  
+
+def open_gate():
+  mqtt_publish(True)
+
+
 class InstructorControls:
     def __init__(self, root):
         self.root = root
@@ -64,7 +86,7 @@ class InstructorControls:
         self.comboLocation = ttk.Combobox(self.entriesFrame, textvariable=self.userLocation, font=("Times New Roman", 15),
                                         width=28,
                                         state="readonly")
-        self.comboLocation['values'] = ("Matriz")
+        self.comboLocation['values'] = ("Platinum")
         self.comboLocation.grid(row=2, column=3, padx=10, pady=5, sticky="w")
 
         # User Date init
@@ -252,7 +274,7 @@ class InstructorControls:
         self.btnView.grid(row=0, column=3, padx=210)
 
         # Book a Session
-        self.btnBook = Button(self.entriesFrame, command=self.access_control, text="Control de Acceso", bd=0, cursor="hand2",
+        self.btnBook = Button(self.entriesFrame, command=open_gate, text="Abrir Torniquete", bd=0, cursor="hand2",
                               bg="#ff1909",
                               fg="black", width=15, font=("Impact", 15))
         self.btnBook.grid(row=0, column=4, padx=0)

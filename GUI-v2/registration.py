@@ -167,7 +167,7 @@ class Registration:
     def iniciar(self):
         # Elegimos la camara
         if not self.cap:
-            self.cap = cv2.VideoCapture(0)
+            self.cap = cv2.VideoCapture(1)
         self.inicio.grid_remove()
         self.image_bytes = None
         self.visualizar()
@@ -219,7 +219,7 @@ class Registration:
         self.comboLocation = ttk.Combobox(self.registrationControlFrame, textvariable=self.userLocation, font=("Times New Roman", 15),
                                         width=40,
                                         state="readonly")
-        self.comboLocation['values'] = ("Matriz", "Platinum")
+        self.comboLocation['values'] = ("Platinum")
         self.comboLocation.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         # User Date init
