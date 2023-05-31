@@ -177,7 +177,7 @@ class AccessControl:
                                                 self.userName_.set(self.face.FullName)
                                                 self.userDateInit_.set(self.face.suscription_start)
                                                 self.userDateFinish_.set(self.face.suscription_end)
-                                                daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.now().replace(second=0, microsecond=0))/timedelta(days=1))
+                                                daysCount_ = int((datetime.strptime(self.face.suscription_end, '%d/%m/%Y') - datetime.now().replace(hour=0, minute=0, second=0, microsecond=0))/timedelta(days=1))
                                                 if daysCount_>=0:
                                                     self.label.configure(text=f'Persona reconocida. Bien venido!', fg="Green")
                                                     self.daysCount.set(str(daysCount_))
