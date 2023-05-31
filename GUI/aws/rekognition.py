@@ -47,7 +47,7 @@ def index_face(image):
         )
         for match in response['FaceMatches']:
             print('Rostro conocido')
-            if match['Face']['Confidence'] > 99.5:
+            if match['Similarity'] > 99.5:
                 try:
                     face = User.get(match['Face']['FaceId'])
                     return {'id': f'{match["Face"]["FaceId"]}', 'register': face}

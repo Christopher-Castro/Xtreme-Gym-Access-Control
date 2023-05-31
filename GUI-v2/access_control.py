@@ -177,9 +177,9 @@ class AccessControl:
                                 )
                                 self.found = False
                                 for match in self.response['FaceMatches']:
-                                    print(match['Face']['FaceId'],match['Face']['Confidence'])
+                                    print(match['Face']['FaceId'],match['Similarity'])
     
-                                    if match['Face']['Confidence'] > 99.5:
+                                    if match['Similarity'] > 99.5:
                                         # self.face = dynamodb.get_item(
                                         #     TableName='facerecognition',
                                         #     Key={'RekognitionId': {'S': match['Face']['FaceId']}}

@@ -52,7 +52,7 @@ def visualizar():
                     )
                     found = False
                     for match in response['FaceMatches']:
-                        print(match['Face']['FaceId'],match['Face']['Confidence'])
+                        print(match['Face']['FaceId'],match['Similarity'])
 
                         face = dynamodb.get_item(
                             TableName='facerecognition',
