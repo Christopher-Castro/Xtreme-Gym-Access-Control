@@ -13,7 +13,7 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 
 ## mqtt config
-broker_url = "192.168.100.48"
+broker_url = "192.168.100.56"
 broker_port = 1883
 def on_connect(client, userdata, flags, rc):
 	print("Connected With Result Code ", rc)
