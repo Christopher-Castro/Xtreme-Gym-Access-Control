@@ -43,11 +43,13 @@ def index_face(image):
         # to index faces into specified collection
         response = rekognition.search_faces_by_image(
             CollectionId='facerecognition_collection',
-            Image={'Bytes': image}
+            Image={'Bytes': image},
+            MaxFaces=1
         )
         for match in response['FaceMatches']:
             print('Rostro conocido')
-            if match['Similarity'] > 99.5:
+            print(match['Similarity'])
+            if match['Similarity'] > 95:
                 try:
                     face = User.get(match['Face']['FaceId'])
                     return {'id': f'{match["Face"]["FaceId"]}', 'register': face}

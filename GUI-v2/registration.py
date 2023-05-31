@@ -167,7 +167,7 @@ class Registration:
     def iniciar(self):
         # Elegimos la camara
         if not self.cap:
-            self.cap = cv2.VideoCapture(1)
+            self.cap = cv2.VideoCapture(0)
         self.inicio.grid_remove()
         self.image_bytes = None
         self.visualizar()
